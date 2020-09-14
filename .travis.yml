@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t nayaran/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true nayaran/react-test npm test
+
+after_success:
+  - docker build -t nayaran/multi-client ./client
+  - docker build -t nayaran/multi-nginx ./nginx
+  - docker build -t nayaran/multi-server ./server
+  - docker build -t nayaran/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take these images and push them to docker hub
+  - docker push nayaran/multi-client
+  - docker push nayaran/multi-nginx
+  - docker push nayaran/multi-server
+  - docker push nayaran/multi-worker
